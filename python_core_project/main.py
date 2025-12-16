@@ -1,79 +1,7 @@
-# ===============================
-# Smart File & Data Management System
-# Core Python Project
-# Author: Komal Sakhidad
-# ===============================
+from utils import logger
+from file_handler import initialize_file, write_record, read_records, overwrite_records
+from record_manager import Record
 
-"""
-PROJECT OVERVIEW:
-This is a menu-driven CLI based Python application that manages user records
-using core Python concepts such as:
-- Functions
-- File Handling
-- OOP (Classes)
-- Error Handling
-- Decorators
-- Datetime
-
-Files Included (logical separation):
-1. main.py
-2. record_manager.py
-3. file_handler.py
-4. utils.py
-
-"""
-
-# ===============================
-# utils.py
-# ===============================
-from datetime import datetime
-
-def logger(func):
-    """Decorator for logging function calls"""
-    def wrapper(*args, **kwargs):
-        print(f"[LOG] {func.__name__} called at {datetime.now()}")
-        return func(*args, **kwargs)
-    return wrapper
-
-# ===============================
-# file_handler.py
-# ===============================
-FILE_NAME = "records.csv"
-
-def initialize_file():
-    try:
-        with open(FILE_NAME, "x") as f:
-            f.write("ID,Name,Age,Course,Created_At\n")
-    except FileExistsError:
-        pass
-
-
-def write_record(record):
-    with open(FILE_NAME, "a") as f:
-        f.write(",".join(record) + "\n")
-
-
-def read_records():
-    with open(FILE_NAME, "r") as f:
-        return f.readlines()[1:]
-
-# ===============================
-# record_manager.py
-# ===============================
-class Record:
-    def __init__(self, record_id, name, age, course):
-        self.record_id = record_id
-        self.name = name
-        self.age = age
-        self.course = course
-        self.created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    def to_list(self):
-        return [self.record_id, self.name, self.age, self.course, self.created_at]
-
-# ===============================
-# main.py
-# ==============================
 @logger
 def add_record():
     try:
@@ -89,32 +17,70 @@ def add_record():
     except Exception as e:
         print("Error:", e)
 
-
 @logger
 def view_records():
     records = read_records()
     if not records:
         print("No records found!\n")
         return
-
     for r in records:
         print(r.strip())
     print()
-
 
 @logger
 def search_record():
     search_id = input("Enter ID to search: ")
     records = read_records()
-
     for r in records:
         if r.startswith(search_id + ","):
             print("Record Found:")
-            print(r)
+            print(r.strip())
             return
-
     print("Record not found!\n")
 
+@logger
+def delete_record():
+    del_id = input("Enter ID to delete: ")
+    records = read_records()
+    updated_records = []
+    found = False
+
+    for r in records:
+        if r.startswith(del_id + ","):
+            found = True
+            continue
+        updated_records.append(r.strip().split(","))
+
+    if found:
+        overwrite_records(updated_records)
+        print(f"Record with ID {del_id} deleted successfully!\n")
+    else:
+        print("Record not found!\n")
+
+@logger
+def update_record():
+    upd_id = input("Enter ID to update: ")
+    records = read_records()
+    updated_records = []
+    found = False
+
+    for r in records:
+        fields = r.strip().split(",")
+        if fields[0] == upd_id:
+            found = True
+            print("Enter new details (leave blank to keep current):")
+            name = input(f"Name [{fields[1]}]: ") or fields[1]
+            age = input(f"Age [{fields[2]}]: ") or fields[2]
+            course = input(f"Course [{fields[3]}]: ") or fields[3]
+            updated_records.append([upd_id, name, age, course, fields[4]])
+        else:
+            updated_records.append(fields)
+
+    if found:
+        overwrite_records(updated_records)
+        print(f"Record with ID {upd_id} updated successfully!\n")
+    else:
+        print("Record not found!\n")
 
 @logger
 def main_menu():
@@ -125,10 +91,11 @@ def main_menu():
         print("1. Add Record")
         print("2. View Records")
         print("3. Search Record")
-        print("4. Exit")
+        print("4. Delete Record")
+        print("5. Update Record")
+        print("6. Exit")
 
         choice = input("Enter choice: ")
-
         if choice == "1":
             add_record()
         elif choice == "2":
@@ -136,11 +103,14 @@ def main_menu():
         elif choice == "3":
             search_record()
         elif choice == "4":
+            delete_record()
+        elif choice == "5":
+            update_record()
+        elif choice == "6":
             print("Exiting program...")
             break
         else:
             print("Invalid choice! Try again.")
-
 
 if __name__ == "__main__":
     main_menu()
