@@ -17,8 +17,6 @@ A Python-based project to efficiently manage records using a CSV file. Add, view
 ## Project Structure
 Smart-File-Data-Management-System/
 
-│
-
 ├─ main.py           # Main program and menu
 
 ├─ utils.py          # Logger and helper functions
